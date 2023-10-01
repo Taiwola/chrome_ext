@@ -3,6 +3,10 @@ import { uploadVideo } from "../middlewares/multer";
 import * as fs from "fs";
 import { Readable } from "stream";
 import * as path from "path";
+import { Deepgram } from "@deepgram/sdk";
+
+const deepgramApiKey = process.env.deepgram as string;
+const deepgram = new Deepgram(deepgramApiKey);
 
 const router = Router();
 const video = uploadVideo.single("video");
@@ -12,7 +16,7 @@ router.post("/upload/:id", video, async (req, res) => {
   try {
     const filePath = req.file?.path;
     const buffer: Buffer = fs.readFileSync(filePath as string);
-    const bufferBody = req.body;
+    const bufferBody = req.file?.buffer;
 
     const bufferOption = buffer || bufferBody;
 
@@ -21,7 +25,7 @@ router.post("/upload/:id", video, async (req, res) => {
     mp4Readable.push(bufferOption);
     mp4Readable.push(null);
 
-    const outputFileName = `video_${id}.mp4`;
+    const outputFileName = `video_${id}.webm`;
     const outputDir = "./public";
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true }); // Create the directory if it doesn't exist.
@@ -105,6 +109,51 @@ router.get("/generate", (req, res) => {
   return res.status(200).json({
     id: randJoin,
   });
+});
+
+router.get("/transcribe/:id", async (req, res) => {
+  const { id } = req.params;
+  const outputDir = "./public";
+
+  const files = fs.readdirSync(outputDir);
+  let filePath = ""; // Initialize filePath outside the loop
+  let filename = "";
+
+  for (const file of files) {
+    filename = file;
+    const regex = /video_(\d+)\.webm/;
+    const match = filename.match(regex);
+
+    if (match && match[1]) {
+      const numberPart = match[1];
+      if (id === numberPart) {
+        // Match found, construct the file path and store it
+        filePath = path.join(outputDir, filename);
+        break; // Exit the loop once a match is found
+      }
+    }
+  }
+  try {
+    // Ensure that the 'deepgram' client is properly configured with your API credentials
+    const protocol = req.protocol;
+    const host = req.get("host");
+    const baseUrl = `${protocol}://${host}`;
+    console.log(baseUrl);
+
+    const response = await deepgram.transcription.preRecorded(
+      { url: baseUrl + filename },
+      { punctuate: true, utterances: true }
+    );
+
+    const srtTranscript = response.toSRT();
+    res.status(200).json({
+      status: "Success",
+      transcript: srtTranscript,
+    });
+  } catch (error) {
+    console.error(error); // Log the error for debugging
+    res.status(500).json({ error: "internal server error" });
+  }
 });
 
 export default router;

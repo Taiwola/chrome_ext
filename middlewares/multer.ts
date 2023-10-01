@@ -17,8 +17,8 @@ const storage = multer.diskStorage({
 });
 
 const fileFilterVideo = (req: Request, file: File, cb: FileFilterCallback) => {
-  if (file.mimetype !== "video/mp4") {
-    return cb(new Error("Only image videos are allowed!"), false);
+  if (file.mimetype !== "video/mp4" && file.mimetype !== "video/webm") {
+    return cb(new Error("Only video files (MP4 or WebM) are allowed!"), false);
   }
   cb(null, true);
 };
