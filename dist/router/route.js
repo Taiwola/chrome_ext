@@ -85,6 +85,7 @@ router.get("/video/:id", (req, res) => __awaiter(void 0, void 0, void 0, functio
         // Check if the directory exists
         const files = fs.readdirSync(outputDir);
         let filePaths = [];
+        console.log(files);
         for (const file of files) {
             const filename = file;
             const regex = /video_(\d+)\.mp4/;
@@ -115,4 +116,18 @@ router.get("/video/:id", (req, res) => __awaiter(void 0, void 0, void 0, functio
         });
     }
 }));
+router.get("/generate", (req, res) => {
+    function generateRandomNumber(count) {
+        const randomNumber = [];
+        for (let i = 0; i < count; i++) {
+            randomNumber.push(Math.floor(Math.random() * randomNumber.length));
+        }
+        return randomNumber;
+    }
+    const randNum = generateRandomNumber(5);
+    const randJoin = randNum.join("");
+    return res.status(200).json({
+        id: randJoin,
+    });
+});
 exports.default = router;

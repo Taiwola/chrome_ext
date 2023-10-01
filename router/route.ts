@@ -59,6 +59,7 @@ router.get("/video/:id", async (req, res) => {
     // Check if the directory exists
     const files = fs.readdirSync(outputDir);
     let filePaths = [];
+    console.log(files);
 
     for (const file of files) {
       const filename = file;
@@ -89,6 +90,21 @@ router.get("/video/:id", async (req, res) => {
       error: "Server error: Directory not found.",
     });
   }
+});
+
+router.get("/generate", (req, res) => {
+  function generateRandomNumber(count: number) {
+    const randomNumber: number[] = [];
+    for (let i = 0; i < count; i++) {
+      randomNumber.push(Math.floor(Math.random() * randomNumber.length));
+    }
+    return randomNumber;
+  }
+  const randNum = generateRandomNumber(5);
+  const randJoin = randNum.join("");
+  return res.status(200).json({
+    id: randJoin,
+  });
 });
 
 export default router;
